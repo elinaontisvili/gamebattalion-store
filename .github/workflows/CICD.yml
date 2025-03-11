@@ -30,10 +30,10 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PRIVATE_KEY }}
+        password: ${{ secrets.SSH_PRIVATE_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         source: "./wordpress.zip, ./wpcontent.zip"
-        target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || 'public_html/gamebattalionstore/live' }}
+        target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || github.event_name == 'release' && 'public_html/gamebattalionstore/live' }}
         timeout: 600
 
     - name: Enable Maintenance Mode
@@ -41,10 +41,11 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PRIVATE_KEY }}
+        password: ${{ secrets.SSH_PRIVATE_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         source: ".maintenance"
-        target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || 'public_html/gamebattalionstore/live' }}
+        target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || github.event_name == 'release' && 'public_html/gamebattalionstore/live' }}
+
 
     - name: Update WordPress Core
       uses: appleboy/ssh-action@v1.0.3
@@ -79,6 +80,6 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script: |
-          rm -f "${{ github.event_name == 'push' && 'public_html/dev.geniuscourses.com' || 'public_html/live.geniuscourses.com' }}/.maintenance"
-          rm -f "${{ github.event_name == 'push' && 'public_html/dev.geniuscourses.com' || 'public_html/live.geniuscourses.com' }}/wpcontent.zip"
-          rm -f "${{ github.event_name == 'push' && 'public_html/dev.geniuscourses.com' || 'public_html/live.geniuscourses.com' }}/wordpress.zip"
+          rm -f "${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || 'public_html/gamebattalionstore/live' }}/.maintenance"
+          rm -f "${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || 'public_html/gamebattalionstore/live' }}/wpcontent.zip"
+          rm -f "${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || 'public_html/gamebattalionstore/live' }}/wordpress.zip"
