@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@master
+      uses: actions/checkout@v3
 
     - name: Prepare WordPress Zip
       run: |
@@ -30,23 +30,45 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PRIVATE_PASSWORD }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
         source: "./wordpress.zip, ./wpcontent.zip"
         target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || github.event_name == 'release' && 'public_html/gamebattalionstore/live' }}
-        timeout: 600
+        timeout: 600s
 
+    - name: Create Maintenance Mode File
+      run: echo "<?php \$upgrading = time(); ?>" > .maintenance
+  
     - name: Enable Maintenance Mode
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PRIVATE_PASSWORD }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
         source: ".maintenance"
         target: ${{ github.event_name == 'push' && 'public_html/gamebattalionstore/dev' || github.event_name == 'release' && 'public_html/gamebattalionstore/live' }}
 
+    - name: Debug - Check Maintenance File #remove it later
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: ls -la public_html/gamebattalionstore/dev/
 
+    - name: Set Maintenance File Permissions
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          chmod 644 public_html/gamebattalionstore/dev/.maintenance
+          chown www-data:www-data public_html/gamebattalionstore/dev/.maintenance
+  
     - name: Update WordPress Core
       uses: appleboy/ssh-action@v1.0.3
       with:
